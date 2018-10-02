@@ -1,10 +1,11 @@
 // MegaPingTest.ino
 // BDK:ESE421:2018C
 // Week 2 Lab Sketch -- Test Ping Sensor
-#include <Servo.h>
+
 #include <SPI.h>
 #include <Adafruit_LSM9DS1.h>
 #include <Adafruit_Sensor.h>
+#include <Servo.h>
 
 
 #include <Adafruit_GPS.h>
