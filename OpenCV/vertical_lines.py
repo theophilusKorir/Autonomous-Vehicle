@@ -1,22 +1,29 @@
 import numpy as np
 import sys
 import cv2 as cv
+import picamera
 
 def show_wait_destroy(winname, img):
     cv.imshow(winname, img)
     cv.moveWindow(winname, 500, 0)
     cv.waitKey(0)
     cv.destroyWindow(winname)
+
 def main(argv):
 
     # [load_image]
     # Check number of arguments
-    if len(argv) < 1:
-        print ('Not enough parameters')
-        print ('Usage:\nmorph_lines_detection.py < path_to_image >')
-        return -1
+    # if len(argv) < 1:
+    #     print ('Not enough parameters')
+    #     print ('Usage:\nmorph_lines_detection.py < path_to_image >')
+    #     return -1
     # Load the image
-    src = cv.imread(argv[0], cv.IMREAD_COLOR)
+    camera = picamera.PiCamera()
+    photoHeight = 540
+    camera.resolution = (16*photoHeight/9, photoHeight)
+    camera.capture('blackRoad.jpg')
+
+    src = cv.imread('blackRoad.jpg')
     # Check if image is loaded fine
     if src is None:
         print ('Error opening image: ' + argv[0])
