@@ -131,7 +131,9 @@ for source_img in os.listdir("test_images/"):
     camera.resolution = (16*photoHeight/9, photoHeight)
     camera.capture('blackRoad.jpg')
 
-    image = mpimg.imread("test_images/"+source_img)
-    processed = process_frame(image)
-    mpimg.imsave("test_images/annotated_"+source_img,processed)
+    
+    processed = process_frame("blackRoad.jpg")
+    cv2.imshow('road', processed)
+
+    cv2.imsave("test_images"+source_img,processed)
 
