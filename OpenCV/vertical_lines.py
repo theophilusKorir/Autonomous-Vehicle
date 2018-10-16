@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import math
 import os
+import shutil
 import picamera
 
 
@@ -119,18 +120,15 @@ def process_frame(image):
     
     return line_image
 
-# camera = picamera.PiCamera()
-# photoHeight = 540
-# camera.resolution = (16*photoHeight/9, photoHeight)
-# camera.capture('blackRoad.jpg')
+camera = picamera.PiCamera()
+photoHeight = 540
+camera.resolution = (16*photoHeight/9, photoHeight)
+camera.capture('blackRoad.jpg')
 
+##os.rename("home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
+shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
     
 for source_img in os.listdir("test_images/"):
-    camera = picamera.PiCamera()
-    photoHeight = 540
-    camera.resolution = (16*photoHeight/9, photoHeight)
-    camera.capture('blackRoad.jpg')
-
     image = mpimg.imread("test_images/"+ source_img)
     processed = process_frame(image)
-    mpimg.imsave("test_images/newimage_"+source_img,processed)
+    mpimg.imsave("test_images/"+source_img,processed)
