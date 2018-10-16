@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import math
 import os
+import picamera
 
 
 
@@ -59,6 +60,9 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
             count += 1
 
     print (sum_x1 / count, sum_y1 / count, sum_x2 / count, sum_y2 / count)
+
+    ## y = mx + b, m = (y1 - y2) / (x1 - x2), b 
+##return 
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
  
@@ -115,9 +119,18 @@ def process_frame(image):
     
     return line_image
 
+# camera = picamera.PiCamera()
+# photoHeight = 540
+# camera.resolution = (16*photoHeight/9, photoHeight)
+# camera.capture('blackRoad.jpg')
 
     
 for source_img in os.listdir("test_images/"):
+    camera = picamera.PiCamera()
+    photoHeight = 540
+    camera.resolution = (16*photoHeight/9, photoHeight)
+    camera.capture('blackRoad.jpg')
+
     image = mpimg.imread("test_images/"+source_img)
     processed = process_frame(image)
     mpimg.imsave("test_images/annotated_"+source_img,processed)
