@@ -42,10 +42,23 @@ def region_of_interest(img, vertices):
 
 def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 
+    sum_x1 = 0 
+    sum_y1 = 0 
+    sum_x2 = 0
+    sum_y2 = 0
+    count = 0
+
     
     for line in lines:
         for x1,y1,x2,y2 in line:
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+            sum_x1 += x1
+            sum_y1 += y1
+            sum_x2 += x2
+            sum_y2 += y2
+            count += 1
+
+    print (sum_x1 / count, sum_y1 / count, sum_x2 / count, sum_y2 / count)
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
  
@@ -108,3 +121,4 @@ for source_img in os.listdir("test_images/"):
     image = mpimg.imread("test_images/"+source_img)
     processed = process_frame(image)
     mpimg.imsave("test_images/annotated_"+source_img,processed)
+
