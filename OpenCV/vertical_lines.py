@@ -119,16 +119,19 @@ def process_frame(image):
     
     return line_image
 
+# camera = picamera.PiCamera()
+# photoHeight = 540
+# camera.resolution = (16*photoHeight/9, photoHeight)
+# camera.capture('blackRoad.jpg')
 
-camera = picamera.PiCamera()
-photoHeight = 540
-camera.resolution = (16*photoHeight/9, photoHeight)
-camera.capture('blackRoad.jpg')
     
-for source_img in os.listdir():
-    
+for source_img in os.listdir("test_images/"):
+    camera = picamera.PiCamera()
+    photoHeight = 540
+    camera.resolution = (16*photoHeight/9, photoHeight)
+    camera.capture('blackRoad.jpg')
 
-    image = cv2.imread(source_img)
+    image = mpimg.imread("test_images/"+ source_img)
     processed = process_frame(image)
-    cv2.imsave("test_images/"+source_img,processed)
+    mpimg.imsave("test_images/"+source_img,processed)
 
