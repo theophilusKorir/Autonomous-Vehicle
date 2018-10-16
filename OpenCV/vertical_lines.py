@@ -1,119 +1,134 @@
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import numpy as np
-import sys
-import cv2 as cv
-import picamera
+import cv2
+import math
+import os
 
 
-##https://github.com/galenballew/SDC-Lane-and-Vehicle-Detection-Tracking.git
 
-def show_wait_destroy(winname, img):
-    cv.imshow(winname, img)
-    cv.moveWindow(winname, 500, 0)
-    cv.waitKey(0)
-    cv.destroyWindow(winname)
+def grayscale(img):
+    
+    return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    
 
-def main(argv):
+def canny(img, low_threshold, high_threshold):
+    
+    return cv2.Canny(img, low_threshold, high_threshold)
 
-    # [load_image]
-    # Check number of arguments
-    # if len(argv) < 1:
-    #     print ('Not enough parameters')
-    #     print ('Usage:\nmorph_lines_detection.py < path_to_image >')
-    #     return -1
-    # Load the image
-    camera = picamera.PiCamera()
-    photoHeight = 540
-    camera.resolution = (16*photoHeight/9, photoHeight)
-    camera.capture('blackRoad.jpg')
+def gaussian_blur(img, kernel_size):
+ 
+    return cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
 
-    src = cv.imread('blackRoad.jpg')
-    # Check if image is loaded fine
-    if src is None:
-        print ('Error opening image: ' + argv[0])
-        return -1
-    # Show source image
+def region_of_interest(img, vertices):
+    """
+    Applies an image mask.
 
+    Only keeps the region of the image defined by the polygon
+    formed from `vertices`. The rest of the image is set to black.
+    """
+    #defining a blank mask to start with
+    mask = np.zeros_like(img)
 
-    #cv.imshow("src", src)
-
-
-    # [load_image]
-    # [gray]
-    # Transform source image to gray if it is not already
-    if len(src.shape) != 2:
-        gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+    if len(img.shape) > 2:
+        channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+        ignore_mask_color = (255,) * channel_count
     else:
-        gray = src
-    # Show gray image
-    #show_wait_destroy("gray", gray)
-    # [gray]
-    # [bin]
-    # Apply adaptiveThreshold at the bitwise_not of gray, notice the ~ symbol
-    gray = cv.bitwise_not(gray)
-    bw = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C, \
-                                cv.THRESH_BINARY, 15, -2)
-    # Show binary image
-    #show_wait_destroy("binary", bw)
-    # [bin]
-    # [init]
-    # Create the images that will use to extract the horizontal and vertical lines
-    horizontal = np.copy(bw)
-    vertical = np.copy(bw)
-    # [init]
-    # [horiz]
-    # Specify size on horizontal axis
-    cols = horizontal.shape[1]
-    horizontal_size = cols / 30
-    # Create structure element for extracting horizontal lines through morphology operations
-    horizontalStructure = cv.getStructuringElement(cv.MORPH_RECT, (horizontal_size, 1))
-    # Apply morphology operations
-    horizontal = cv.erode(horizontal, horizontalStructure)
-    horizontal = cv.dilate(horizontal, horizontalStructure)
-    # Show extracted horizontal lines
-    cv.imshow("horizontal", horizontal)
-    # [horiz]
-    # [vert]
-    # Specify size on vertical axis
-    rows = vertical.shape[0]
-    verticalsize = rows / 30
-    # Create structure element for extracting vertical lines through morphology operations
-    verticalStructure = cv.getStructuringElement(cv.MORPH_RECT, (1, verticalsize))
-    # Apply morphology operations
-    vertical = cv.erode(vertical, verticalStructure)
-    vertical = cv.dilate(vertical, verticalStructure)
-    # Show extracted vertical lines
-    cv.imshow("vertical", vertical)
-    # [vert]
-    # [smooth]
-    # Inverse vertical image
-    vertical = cv.bitwise_not(vertical)
-    show_wait_destroy("vertical_bit", vertical)
-    '''
-    Extract edges and smooth image according to the logic
-    1. extract edges
-    2. dilate(edges)
-    3. src.copyTo(smooth)
-    4. blur smooth img
-    5. smooth.copyTo(src, edges)
-    '''
-    # # Step 1
-    # edges = cv.adaptiveThreshold(vertical, 255, cv.ADAPTIVE_THRESH_MEAN_C, \
-    #                             cv.THRESH_BINARY, 3, -2)
-    # show_wait_destroy("edges", edges)
-    # # Step 2
-    # kernel = np.ones((2, 2), np.uint8)
-    # edges = cv.dilate(edges, kernel)
-    # show_wait_destroy("dilate", edges)
-    # # Step 3
-    # smooth = np.copy(vertical)
-    # # Step 4
-    # smooth = cv.blur(smooth, (2, 2))
-    # # Step 5
-    # (rows, cols) = np.where(edges != 0)
-    # vertical[rows, cols] = smooth[rows, cols]
-    # # Show final result
-    # show_wait_destroy("smooth - final", vertical)
-    # # [smooth]
-    return 0
-if __name__ == "__main__":
-    main(sys.argv[1:])
+        ignore_mask_color = 255
+
+    #filling pixels inside the polygon defined by "vertices" with the fill color
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+
+    #returning the image only where mask pixels are nonzero
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
+
+
+def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
+    """
+    NOTE: this is the function you might want to use as a starting point once you want to
+    average/extrapolate the line segments you detect to map out the full
+    extent of the lane (going from the result shown in raw-lines-example.mp4
+    to that shown in P1_example.mp4).
+
+    Think about things like separating line segments by their
+    slope ((y2-y1)/(x2-x1)) to decide which segments are part of the left
+    line vs. the right line.  Then, you can average the position of each of
+    the lines and extrapolate to the top and bottom of the lane.
+
+    This function draws `lines` with `color` and `thickness`.
+    Lines are drawn on the image inplace (mutates the image).
+    If you want to make the lines semi-transparent, think about combining
+    this function with the weighted_img() function below
+    """
+    for line in lines:
+        for x1,y1,x2,y2 in line:
+            cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+
+def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
+    """
+    `img` should be the output of a Canny transform.
+
+    Returns an image with hough lines drawn.
+    """
+    lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
+    line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    draw_lines(line_img, lines)
+    return line_img
+
+
+
+
+def process_frame(image):
+    global first_frame
+
+    gray_image = grayscale(image)
+    img_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    #hsv = [hue, saturation, value]
+    #more accurate range for yellow since it is not strictly black, white, r, g, or b
+
+    lower_yellow = np.array([20, 100, 100], dtype = "uint8")
+    upper_yellow = np.array([30, 255, 255], dtype="uint8")
+
+    mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
+    mask_white = cv2.inRange(gray_image, 200, 255)
+    mask_yw = cv2.bitwise_or(mask_white, mask_yellow)
+    mask_yw_image = cv2.bitwise_and(gray_image, mask_yw)
+
+    kernel_size = 5
+    gauss_gray = gaussian_blur(mask_yw_image,kernel_size)
+
+    #same as quiz values
+    low_threshold = 50
+    high_threshold = 150
+    canny_edges = canny(gauss_gray,low_threshold,high_threshold)
+
+    imshape = image.shape
+    lower_left = [imshape[1]/9,imshape[0]]
+    lower_right = [imshape[1]-imshape[1]/9,imshape[0]]
+    top_left = [imshape[1]/2-imshape[1]/8,imshape[0]/2+imshape[0]/10]
+    top_right = [imshape[1]/2+imshape[1]/8,imshape[0]/2+imshape[0]/10]
+    vertices = [np.array([lower_left,top_left,top_right,lower_right],dtype=np.int32)]
+    roi_image = region_of_interest(canny_edges, vertices)
+
+    #rho and theta are the distance and angular resolution of the grid in Hough space
+    #same values as quiz
+    rho = 2
+    theta = np.pi/180
+    #threshold is minimum number of intersections in a grid for candidate line to go to output
+    threshold = 20
+    min_line_len = 50
+    max_line_gap = 200
+
+    line_image = hough_lines(roi_image, rho, theta, threshold, min_line_len, max_line_gap)
+    
+    return line_image
+
+
+    
+for source_img in os.listdir("test_images/"):
+    image = mpimg.imread("test_images/"+source_img)
+    processed = process_frame(image)
+    mpimg.imsave("test_images/annotated_"+source_img,processed)
