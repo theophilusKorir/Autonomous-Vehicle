@@ -133,4 +133,4 @@ for source_img in os.listdir("test_images/"):
 
     image = mpimg.imread("test_images/"+ source_img)
     processed = process_frame(image)
-    mpimg.imsave("test_images/"+source_img,processed)
+    mpimg.imsave("test_images/newimage_"+source_img,processed)
