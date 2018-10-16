@@ -7,7 +7,7 @@ import math
 import os
 import shutil
 import picamera
-
+import time
 
 
 def grayscale(img):
@@ -120,15 +120,25 @@ def process_frame(image):
     
     return line_image
 
-camera = picamera.PiCamera()
-photoHeight = 540
-camera.resolution = (16*photoHeight/9, photoHeight)
-camera.capture('blackRoad.jpg')
 
-##os.rename("home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
-shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
-    
-for source_img in os.listdir("test_images/"):
-    image = mpimg.imread("test_images/"+ source_img)
-    processed = process_frame(image)
-    mpimg.imsave("test_images/"+source_img,processed)
+def loop():
+    camera = picamera.PiCamera()
+    photoHeight = 540
+    camera.resolution = (16*photoHeight/9, photoHeight)
+    camera.capture('blackRoad.jpg')
+    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
+
+    count = 0
+    for source_img in os.listdir("test_images/"):
+        image = mpimg.imread("test_images/"+ source_img)
+        processed = process_frame(image)
+        mpimg.imsave("test_images/annotated_ " + str(count) + source_img, processed)
+         
+    count += 1
+    time.sleep(1)
+    loop()
+
+loop()
+
+
+
