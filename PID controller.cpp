@@ -45,7 +45,7 @@ Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
 Servo steeringServo;
 
 float pingDistanceCM = 0.0;
-byte motorPWM=175;
+byte motorPWM=0;
 
 HardwareSerial mySerial = Serial1;
 Adafruit_GPS GPS(&Serial1);
@@ -172,6 +172,7 @@ void loop() {
 
   //  parse GPS when available (set by interrupt)
 //
+  
     if (GPS.newNMEAreceived())
     {
        if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
