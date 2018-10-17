@@ -1,5 +1,5 @@
 
-import matplotlib.pyplot as plt
+##import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 import cv2
@@ -121,24 +121,24 @@ def process_frame(image):
     return line_image
 
 
+
 def loop():
+    
     camera = picamera.PiCamera()
     photoHeight = 540
     camera.resolution = (16*photoHeight/9, photoHeight)
     camera.capture('blackRoad.jpg')
-    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
-
-    count = 0
+    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
+    
     for source_img in os.listdir("test_images/"):
+    
         image = mpimg.imread("test_images/"+ source_img)
         processed = process_frame(image)
-        mpimg.imsave("test_images/annotated_ " + str(count) + source_img, processed)
+        mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
+    
          
-    count += 1
-    time.sleep(1)
-    loop()
-
 loop()
+
 
 
 
