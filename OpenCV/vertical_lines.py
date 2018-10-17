@@ -75,13 +75,13 @@ address = 0x04
 #
 # initialize dummy value of output from Pi (bytes only)
 #
-byteListDummyFromPi = [150, 220]
+##byteListDummyFromPi = [150, 220]
 
 #
 # initialize dummy values of inputs to Pi
 #
-dummyToPiFloats = [-3.1416, 6.2832]
-dummyToPiBytes = [2047, 50, 50]
+# dummyToPiFloats = [-3.1416, 6.2832]
+# dummyToPiBytes = [2047, 50, 50]
 
 #
 # now loop thru reading from and writing to Arduino
@@ -155,8 +155,12 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
     # # print(dummyToPiFloats, dummyToPiBytes)
 #
 #   send variable to Pi
-#
-    putByteList([heading, 0])
+#   
+    count = 5
+    while count > 0:
+        time.sleep(0.5)
+        putByteList([heading, 0])
+        count -= 1
 
     print(heading)
             

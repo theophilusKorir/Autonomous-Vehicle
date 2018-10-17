@@ -64,17 +64,17 @@ void receiveDataI2C(int nPoints) {
 void sendDataI2C(void) {
     if (piCommand == 1) {
         float dataBuffer[2];
-        dataBuffer[0] = piE;
-        dataBuffer[1] = sqrtN;
+        dataBuffer[0] = 
+        dataBuffer[1] = 
         Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
         Serial.println("sending floats");
     }
     else if (piCommand == 2) {
         byte dataBuffer[4];
-        dataBuffer[0] = fiveK / 256;
-        dataBuffer[1] = (fiveK - 256*dataBuffer[0]);
-        dataBuffer[2] = x;
-        dataBuffer[3] = xsq;
+        dataBuffer[0] = 
+        dataBuffer[1] = 
+        dataBuffer[2] =
+        dataBuffer[3] = 
         Wire.write(&dataBuffer[0], 4);
         Serial.println("sending bytes");
     }

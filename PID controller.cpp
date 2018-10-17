@@ -54,6 +54,9 @@ Adafruit_GPS GPS(&Serial1);
 // global variables
 // (yucky but needed to make i2c interrupts work)
 //
+byte piCommand;
+byte piData[2];
+
 
 
 void setup() {
@@ -103,6 +106,48 @@ void setup() {
 SIGNAL(TIMER0_COMPA_vect) {
    char c = GPS.read();
 }
+
+
+
+void receiveDataI2C(int nPoints) {
+      piCommand = Wire.read();
+      //
+      // if Pi is sending data, parse it into incoming data array
+      //
+      if (piCommand == 255) {
+          piData[0] = Wire.read();
+          piData[1] = Wire.read();
+      }
+      //
+      // now clear the buffer, just in case
+      //
+      while (Wire.available()) {Wire.read();}
+}
+
+
+void sendDataI2C(float some, float some2) {
+
+    if (piCommand == 1) {
+        float dataBuffer[2];
+        dataBuffer[0] = some
+        dataBuffer[1] = some2
+        Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
+        Serial.println("sending floats");
+    }
+
+    else if (piCommand == 2) {
+        byte dataBuffer[4];
+        dataBuffer[0] = some1
+        dataBuffer[1] = some2
+        dataBuffer[2] = some1
+        dataBuffer[3] = some2
+        Wire.write(&dataBuffer[0], 4);
+        Serial.println("sending bytes");
+    }
+}
+
+
+
 
 
 //////////////////////////////////////////////////////////////////
@@ -188,6 +233,9 @@ void loop() {
     static float tao = 0.318;
 
     //complementary filter
+    receiveDataI2C(5);
+
+    serial.print(piData[0])
 
     est_imu_heading += g.gyro.z * delta_t ;
 
