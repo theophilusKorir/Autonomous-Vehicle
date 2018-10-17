@@ -1,15 +1,17 @@
+//#include <Adafruit_LSM9DS1.h>
+
 // MegaPingTest.ino
 // BDK:ESE421:2018C
 // Week 2 Lab Sketch -- Test Ping Sensor
 
 #include <SPI.h>
-#include <Adafruit_LSM9DS1.h>
-#include <Adafruit_Sensor.h>
+//#include <Adafruit_LSM9DS1.h>
+//#include <Adafruit_Sensor.h>
 #include <Servo.h>
 
 
 #include <Adafruit_GPS.h>
-#include <Adafruit_Sensor.h>
+//#include <Adafruit_Sensor.h>
 
 #define servoPin 7 // pin for servo signal
 #define pingTrigPin 23 // ping sensor trigger pin (output from Arduino)
@@ -41,7 +43,7 @@ float gpsPsi;
 int gpsNSat;
 
 
-Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
+//Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
 Servo steeringServo;
 
 float pingDistanceCM = 0.0;
@@ -76,12 +78,12 @@ void setup() {
       Serial.println("Oops ... unable to initialize the LSM9DS1. Check your wiring!");
       while (1);
     }
-    //Serial.println("Found LSM9DS1 9DOF");
-    //
-    // set ranges for sensor
-    //
-    lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G);
-    lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
+    Serial.println("Found LSM9DS1 9DOF");
+    
+    set ranges for sensor
+    
+   lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G);
+   lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
     lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);
 
     steeringServo.attach(servoPin);
@@ -107,42 +109,48 @@ SIGNAL(TIMER0_COMPA_vect) {
    char c = GPS.read();
 }
 
+static int camera_angle = 0;
 
-
-void receiveDataI2C(int nPoints) {
+int receiveDataI2C(int nPoints) {
       piCommand = Wire.read();
       //
       // if Pi is sending data, parse it into incoming data array
       //
-      if (piCommand == 255) {
+      
+      if (piCommand == 255 && piCommand < 256) {
+       
+           delay(300);
           piData[0] = Wire.read();
           piData[1] = Wire.read();
+           if(piData[0] != 255 && piData[0] < 90) {
+            camera_angle = piData[0];
+            Serial.println(camera_angle);
+          }
+            
       }
-      //
-      // now clear the buffer, just in case
-      //
-      while (Wire.available()) {Wire.read();}
-}
+      
 
+      return camera_angle;
+}
 
 void sendDataI2C(float some, float some2) {
 
     if (piCommand == 1) {
         float dataBuffer[2];
-        dataBuffer[0] = some
-        dataBuffer[1] = some2
+        dataBuffer[0] = some;
+        dataBuffer[1] = some2;
         Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
-        Serial.println("sending floats");
+        //Serial.println("sending floats");
     }
 
     else if (piCommand == 2) {
         byte dataBuffer[4];
-        dataBuffer[0] = some1
-        dataBuffer[1] = some2
-        dataBuffer[2] = some1
-        dataBuffer[3] = some2
+        dataBuffer[0] = some;
+        dataBuffer[1] = some2;
+        dataBuffer[2] = some;
+        dataBuffer[3] = some2;
         Wire.write(&dataBuffer[0], 4);
-        Serial.println("sending bytes");
+        //Serial.println("sending bytes");
     }
 }
 
@@ -177,7 +185,7 @@ void loop() {
     {
        if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
        {
-          Serial.println("GPS Parse Fail");
+          //Serial.println("GPS Parse Fail");
        }
        else
        {
@@ -187,34 +195,16 @@ void loop() {
           gpsPsi = GPS.angle;
           gpsNSat = GPS.satellites;
               
-          //Serial.print((int)GPS.satellites); Serial.print(' ');
-          //Serial.print(GPS.hour, DEC); Serial.print(':');
-          //Serial.print(GPS.minute, DEC); Serial.print(':');
-          //Serial.print(GPS.seconds, DEC); Serial.print('.');
-          //Serial.print(GPS.milliseconds); Serial.print(' ');
-
-          //Serial.print(gpsLat,5); Serial.print(", "); Serial.print(gpsLon,5);
        }
     }
   
     
 
-   
+   //IMU stuff
 
-    lsm.read();  /* ask it to read in the data */
-    sensors_event_t a, m, g, temp;
-    lsm.getEvent(&a, &m, &g, &temp);
-    //Serial.print("Accel X: "); Serial.print(a.acceleration.x); Serial.print(" m/s^2");
-    //Serial.print("\tY: "); Serial.print(a.acceleration.y);     Serial.print(" m/s^2 ");
-    //Serial.print("\tZ: "); Serial.print(a.acceleration.z);     Serial.println(" m/s^2 ");
-
-    //Serial.print("Mag X: "); Serial.print(m.magnetic.x);   Serial.print(" gauss");
-    //Serial.print("\tY: "); Serial.print(m.magnetic.y);     Serial.print(" gauss");
-    //Serial.print("\tZ: "); Serial.print(m.magnetic.z);     Serial.println(" gauss");
-
-    //Serial.print("Gyro X: "); Serial.print(g.gyro.x);   Serial.print(" dps");
-    //Serial.print("\tY: "); Serial.print(g.gyro.y);      Serial.print(" dps");
-    //Serial.print("\tZ: "); Serial.print(g.gyro.z);      Serial.println(" dps");
+   lsm.read();  /* ask it to read in the data */
+   sensors_event_t a, m, g, temp;
+   lsm.getEvent(&a, &m, &g, &temp);
 
     
     static float delta_t = 0.5;
@@ -233,12 +223,17 @@ void loop() {
 
     static float tao = 0.318;
 
+    
+    int cam_heading = receiveDataI2C(5);
+
+    Serial.println(cam_heading);
+
+    
+
+    
     //complementary filter
-    receiveDataI2C(5);
 
-    serial.print(piData[0])
-
-    est_imu_heading += g.gyro.z * delta_t ;
+    est_imu_heading += g.gyro.z * delta_t;
 
     float modgps = gpsPsi - est_imu_heading;
 
@@ -293,30 +288,8 @@ void getPingDistanceCM()
  {
     echo_time = timeout_us;
  }
-  //
-  // return the distance in centimeters
-  // distance = (10^-6) * (echo_time_us) * (speed of sound m/s) * (100 cm/m) / 2
-  // divide by 2 because we measure "round trip" time for echo
-  // (0.000001 * echo_time_us * 340.0 * 100.0 / 2.0)
-  // = 0.017*echo_time
-  //
+
   pingDistanceCM = constrain(0.017*echo_time,5.0,50.0);
 
 
-}
-
-void receiveDataI2C(int nPoints) {
-        float dataBuffer[2];
-        dataBuffer[0] = 32;
-        dataBuffer[1] = 13;
-        Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
-        Serial.println("sending floats");
-}
-
-void sendDataI2C(void) {
-        float dataBuffer[2];
-        dataBuffer[0] = 32;
-        dataBuffer[1] = 13;
-        Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
-        Serial.println("sending floats");
 }
