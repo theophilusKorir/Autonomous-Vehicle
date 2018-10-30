@@ -7,7 +7,7 @@ import math
 import os
 import shutil
 import struct
-import smbus
+##import smbus
 ##import picamera
 import time
 
@@ -65,7 +65,7 @@ def bytes_2_float(data, index):
 #
 # smbus implements i2c on the RPi
 #
-bus = smbus.SMBus(1)
+##bus = smbus.SMBus(1)
 
 #
 # this is the Slave address of the Arduino
@@ -140,12 +140,23 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
              
             temp = (y1 - y2) / (x1 - x2)
+            ##intercept = y1 - temp * x1
+
+
 
             if temp < 0:
                 gradient = (-1 * temp)
                 print(gradient)
 
-    heading = 90 - (math.atan(gradient) * 57.3)
+                intercept = (y1 - gradient * x1)
+                x_bottom = (540 - intercept) / gradient;
+                offset = x_bottom - 540;
+ 
+                print(offset)
+
+    beta_angle = 90 - (math.atan(gradient) * 57.3)
+
+
 
 
     # while True:
@@ -156,13 +167,13 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 #
 #   send variable to Pi
 #   
-    count = 5
-    while count > 0:
-        time.sleep(0.5)
-        putByteList([heading, 0])
-        count -= 1
+    # count = 5
+    # while count > 0:
+    #     time.sleep(0.5)
+    #     putByteList([heading, 0])
+    #     count -= 1
 
-    print(heading)
+    # print(heading)
             
 
     
