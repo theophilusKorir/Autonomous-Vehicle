@@ -7,8 +7,8 @@ import math
 import os
 import shutil
 import struct
-##import smbus
-##import picamera
+import smbus
+import picamera
 import time
 
 def getFloatData(oldFloats):
@@ -65,7 +65,7 @@ def bytes_2_float(data, index):
 #
 # smbus implements i2c on the RPi
 #
-##bus = smbus.SMBus(1)
+bus = smbus.SMBus(1)
 
 #
 # this is the Slave address of the Arduino
@@ -153,11 +153,14 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
                 offset = x_bottom - 540;
  
                 print(offset)
-
-                count = 5
+                beta_angle = 90 - int((math.atan(gradient) * 57.3))
+                count = 10
                 while count > 0:
                     time.sleep(0.5)
-                    putByteList([offset, 0])
+                    print(offset)
+                    print(beta_angle)
+                    bytelist = [offset, beta_angle]
+                    putByteList(bytelist)
                     count -= 1
 
                    ## print(offset)
