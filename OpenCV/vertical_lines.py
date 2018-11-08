@@ -154,26 +154,28 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
  
                 print(offset)
 
-    beta_angle = 90 - (math.atan(gradient) * 57.3)
+                count = 5
+                while count > 0:
+                    time.sleep(0.5)
+                    putByteList([offset, 0])
+                    count -= 1
+
+                   ## print(offset)
+
+   ## beta_angle = 90 - (math.atan(gradient) * 57.3)
 
 
 
 
-    # while True:
-    # # time.sleep(0.1)
-    # # dummyToPiFloats = getFloatData(dummyToPiFloats)
-    # # dummyToPiBytes = getByteData(dummyToPiBytes)
-    # # print(dummyToPiFloats, dummyToPiBytes)
-#
-#   send variable to Pi
-#   
-    # count = 5
-    # while count > 0:
-    #     time.sleep(0.5)
-    #     putByteList([heading, 0])
-    #     count -= 1
+# while True:
+#     time.sleep(0.1)
+#     dummyToPiFloats = getFloatData(dummyToPiFloats)
+#     dummyToPiBytes = getByteData(dummyToPiBytes)
+#     print(dummyToPiFloats, dummyToPiBytes)
 
-    # print(heading)
+##send variable to Pi
+  
+
             
 
     
