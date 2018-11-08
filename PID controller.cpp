@@ -1,4 +1,4 @@
-//#include <Adafruit_LSM9DS1.h>
+#include <Adafruit_LSM9DS1.h>
 
 // MegaPingTest.ino
 // BDK:ESE421:2018C
@@ -42,8 +42,11 @@ float gpsV;
 float gpsPsi;
 int gpsNSat;
 
+static int trial[2];
 
-//Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
+
+
+Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
 Servo steeringServo;
 
 float pingDistanceCM = 0.0;
@@ -58,6 +61,9 @@ Adafruit_GPS GPS(&Serial1);
 //
 byte piCommand;
 byte piData[2];
+byte d;
+byte v_desired;
+int  pwm_v_ratio = 5;
 
 
 
@@ -80,7 +86,7 @@ void setup() {
     }
     Serial.println("Found LSM9DS1 9DOF");
     
-    set ranges for sensor
+    //set ranges for sensor
     
    lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G);
    lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
@@ -118,19 +124,11 @@ int receiveDataI2C(int nPoints) {
       //
       
       if (piCommand == 255 && piCommand < 256) {
-       
-           delay(300);
-          piData[0] = Wire.read();
-          piData[1] = Wire.read();
-           if(piData[0] != 255 && piData[0] < 90) {
-            camera_angle = piData[0];
-            Serial.println(camera_angle);
-          }
+          d = Wire.read();
+          v_desired = Wire.read();
             
       }
       
-
-      return camera_angle;
 }
 
 void sendDataI2C(float some, float some2) {
@@ -164,8 +162,6 @@ void loop() {
   //
 //  get the ping distance
 //
-   
-    start_time = millis();
     getPingDistanceCM();
     
     analogWrite(motorPin,motorPWM);
@@ -208,51 +204,43 @@ void loop() {
 
     
     static float delta_t = 0.5;
-
-    float prop_gain = 0.5;
-
-    float heading_angle = 90.0;
-
+    float prop_gain_heading = 0.5;
+    float heading_desired = 90.0;
     static float est_heading = 0.0;
-
     static float est_imu_heading = 0.0;
-
     static float est_gps_heading = 0.0;
-
     static float filtered = 0.0;
-
     static float tao = 0.318;
+    float d_desired = 0;
+    float gain_d = 10;
+    float filtered_heading;
+    float filtered_v;
+    float est_v;
 
-    
-    int cam_heading = receiveDataI2C(5);
-
-    Serial.println(cam_heading);
-
-    
-
-    
-    //complementary filter
-
+    //distance and heading feedback control with complementary filter
+    //heading control
     est_imu_heading += g.gyro.z * delta_t;
-
-    float modgps = gpsPsi - est_imu_heading;
-
-    filtered += (delta_t / tao) * (modgps - est_imu_heading - filtered);
-
+    filtered_heading += (delta_t / tao) * (gpsPsi - est_imu_heading - filtered_heading);
     est_heading = filtered + est_imu_heading;
+    float servo_angle = heading_desired - prop_gain_heading * est_heading;
+    steeringServo.write(constrain(servo_angle, -60, 60)); 
 
-    //Serial.print(est_heading);
+    //d control   
+    heading_desired = 90 - (d_desired - d) * gain_d; 
 
-    float servo_angle = heading_angle - prop_gain * est_heading;
+    //velocity feedback control
+    float tao_v = 300;
+    static float est_imu_v = 0;
 
-    steeringServo.write(constrain(servo_angle, heading_angle - 30, heading_angle + 30));     
+    est_imu_v += g.gyro.x * delta_t;
+    filtered_v += (delta_t / tao_v) * (gpsV - est_imu_v - filtered_v);
+    est_v = filtered_v + est_imu_v; 
+    motorPWM -=  (v_desired - est_v) * pwm_v_ratio;
 
-//
+    //Serial.println(d);
+
 //  pause 0.05 second
 //
-end_time = millis();
-
-  delay (80);
     
 }
 
