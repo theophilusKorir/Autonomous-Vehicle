@@ -1,17 +1,9 @@
 #include <Adafruit_LSM9DS1.h>
-
-// MegaPingTest.ino
-// BDK:ESE421:2018C
-// Week 2 Lab Sketch -- Test Ping Sensor
-
 #include <SPI.h>
-//#include <Adafruit_LSM9DS1.h>
-//#include <Adafruit_Sensor.h>
 #include <Servo.h>
-
-
+#include <Wire.h>
 #include <Adafruit_GPS.h>
-//#include <Adafruit_Sensor.h>
+
 
 #define servoPin 7 // pin for servo signal
 #define pingTrigPin 23 // ping sensor trigger pin (output from Arduino)
@@ -23,52 +15,32 @@
 #define LSM9DS1_MOSI 51 //BDK-mega
 #define LSM9DS1_XGCS 49 //BDK-mega
 #define LSM9DS1_MCS 47 //BDK-mega
-
-#include <Wire.h>
-
 #define SLAVE_ADDRESS 0x04
 
-//
-// global variables
-// (yucky but needed to make i2c interrupts work later)
-//
+//IMU global variables
+Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
+Servo steeringServo;
+float pingDistanceCM = 0.0;
+byte motorPWM=0;
 
-unsigned long start_time;
-unsigned long end_time;
 
+//GPS global variables
+HardwareSerial mySerial = Serial1;
+Adafruit_GPS GPS(&Serial1);
 float gpsLat;
 float gpsLon;
 float gpsV;
 float gpsPsi;
 int gpsNSat;
 
-static int trial[2];
-
-
-
-Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
-Servo steeringServo;
-
-float pingDistanceCM = 0.0;
-byte motorPWM=0;
-
-HardwareSerial mySerial = Serial1;
-Adafruit_GPS GPS(&Serial1);
-
-//
-// global variables
-// (yucky but needed to make i2c interrupts work)
-//
+//i2c global variables
 byte piCommand;
 byte piData[2];
 byte d;
 byte v_desired;
 int  pwm_v_ratio = 5;
 
-
-
 void setup() {
-    
     Serial.begin(115200);
 
     //  Activate Interrupt for GPS
@@ -87,17 +59,12 @@ void setup() {
     Serial.println("Found LSM9DS1 9DOF");
     
     //set ranges for sensor
-    
    lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G);
    lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
     lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);
-
     steeringServo.attach(servoPin);
      
-
-//
 //  set up the ping sensor pins
-//
     pinMode(pingGrndPin,OUTPUT); 
     digitalWrite(pingGrndPin,LOW);
     pinMode(pingTrigPin,OUTPUT);
@@ -110,7 +77,7 @@ void setup() {
     Wire.onRequest(sendDataI2C);
 }
 
-//  This Interrupt is called once a millisecond, looks for any new GPS data, and stores it
+//millisecond Interupt
 SIGNAL(TIMER0_COMPA_vect) {
    char c = GPS.read();
 }
@@ -119,26 +86,20 @@ static int camera_angle = 0;
 
 int receiveDataI2C(int nPoints) {
       piCommand = Wire.read();
-      //
+
       // if Pi is sending data, parse it into incoming data array
-      //
-      
       if (piCommand == 255 && piCommand < 256) {
           d = Wire.read();
-          v_desired = Wire.read();
-            
-      }
-      
+          v_desired = Wire.read();          
+      }      
 }
 
 void sendDataI2C(float some, float some2) {
-
     if (piCommand == 1) {
         float dataBuffer[2];
         dataBuffer[0] = some;
         dataBuffer[1] = some2;
         Wire.write((byte*) &dataBuffer[0], 2*sizeof(float));
-        //Serial.println("sending floats");
     }
 
     else if (piCommand == 2) {
@@ -148,22 +109,14 @@ void sendDataI2C(float some, float some2) {
         dataBuffer[2] = some;
         dataBuffer[3] = some2;
         Wire.write(&dataBuffer[0], 4);
-        //Serial.println("sending bytes");
     }
 }
-
-
-
-
 
 //////////////////////////////////////////////////////////////////
 void loop() {
 
-  //
 //  get the ping distance
-//
-    getPingDistanceCM();
-    
+    getPingDistanceCM();    
     analogWrite(motorPin,motorPWM);
     if (pingDistanceCM < 20.0)
     {
@@ -174,14 +127,12 @@ void loop() {
      analogWrite(motorPin,motorPWM);
     }
 
-  //  parse GPS when available (set by interrupt)
-//
-  
+  //  parse GPS when available 
     if (GPS.newNMEAreceived())
     {
        if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
        {
-          //Serial.println("GPS Parse Fail");
+          Serial.println("GPS Parse Fail");
        }
        else
        {
@@ -194,15 +145,12 @@ void loop() {
        }
     }
   
-    
-
-   //IMU stuff
-
-   lsm.read();  /* ask it to read in the data */
+   /* ask it to read in the data */
+   lsm.read();  
    sensors_event_t a, m, g, temp;
    lsm.getEvent(&a, &m, &g, &temp);
 
-    
+	//Heading and distance to center of the road control variables  
     static float delta_t = 0.5;
     float prop_gain_heading = 0.5;
     float heading_desired = 90.0;
@@ -225,51 +173,31 @@ void loop() {
     float servo_angle = heading_desired - prop_gain_heading * est_heading;
     steeringServo.write(constrain(servo_angle, -60, 60)); 
 
-    //d control   
+    //distance control (outer loop)   
     heading_desired = 90 - (d_desired - d) * gain_d; 
 
     //velocity feedback control
     float tao_v = 300;
     static float est_imu_v = 0;
 
+    //GPS and IMU velocity feedback
     est_imu_v += g.gyro.x * delta_t;
     filtered_v += (delta_t / tao_v) * (gpsV - est_imu_v - filtered_v);
     est_v = filtered_v + est_imu_v; 
-    motorPWM -=  (v_desired - est_v) * pwm_v_ratio;
-
-    //Serial.println(d);
-
-//  pause 0.05 second
-//
-    
+    motorPWM -=  (v_desired - est_v) * pwm_v_ratio;    
 }
 
 ////////////////////////////////////////////////////////////
-// Ping Sensor -- update value of pingDistanceCM
-////////////////////////////////////////////////////////////
+// Ping Sensor 
 void getPingDistanceCM()
 {
-  //
-  // 3000 us timeout implies maximum distance is 51cm
-  // but in practice, actual max larger?
-  //
   const long timeout_us = 3000;
-  //
-  // pingTrigPin = trigger pin
-  // pingEchoPin = echo pin
-  // The PING))) is triggered by a HIGH pulse of 2 or more microseconds.
-  // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
-  //
+
   digitalWrite(pingTrigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(pingTrigPin, HIGH);
   delayMicroseconds(5);
   digitalWrite(pingTrigPin, LOW);
-  //
-  // The echo pin is used to read the signal from the PING))): a HIGH
-  // pulse whose duration is the time (in microseconds) from the sending
-  // of the ping to the reception of its echo off of an object.
-  //
   unsigned long echo_time;
   echo_time = pulseIn(pingEchoPin, HIGH, timeout_us);
   if (echo_time == 0)
@@ -278,6 +206,4 @@ void getPingDistanceCM()
  }
 
   pingDistanceCM = constrain(0.017*echo_time,5.0,50.0);
-
-
 }
