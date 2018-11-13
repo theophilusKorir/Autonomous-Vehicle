@@ -7,8 +7,8 @@ import math
 import os
 import shutil
 import struct
-# import smbus
-# import picamera
+import smbus
+import picamera
 import time
 
 # def getFloatData(oldFloats):
@@ -202,12 +202,12 @@ def process_frame(image):
 
 def loop():
     
-    # camera = picamera.PiCamera()
-    # photoHeight = 540
-    # camera.resolution = (16*photoHeight/9, photoHeight)
-    # camera.capture('blackRoad.jpg')
-    # shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
-    
+##    camera = picamera.PiCamera()
+##    photoHeight = 540
+##    camera.resolution = (16*photoHeight/9, photoHeight)
+##    camera.capture('blackRoad.jpg')
+##    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
+##    
     for source_img in os.listdir("test_images/"):
     
         image = mpimg.imread("test_images/"+ source_img)
