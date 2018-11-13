@@ -205,8 +205,8 @@ def process_frame(image):
     #hsv = [hue, saturation, value]
     #more accurate range for yellow since it is not strictly black, white, r, g, or b
 
-    lower_yellow = np.array([20, 100, 100], dtype = "uint8")
-    upper_yellow = np.array([30, 255, 255], dtype="uint8")
+    lower_yellow = np.array([10, 100, 100], dtype = "uint8")
+    upper_yellow = np.array([60, 255, 255], dtype="uint8")
 
     mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
     mask_white = cv2.inRange(gray_image, 200, 255)
@@ -246,20 +246,21 @@ def process_frame(image):
 
 def loop():
     
-    # camera = picamera.PiCamera()
-    # photoHeight = 540
-    # camera.resolution = (16*photoHeight/9, photoHeight)
-    # camera.capture('blackRoad.jpg')
-    # shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
+    camera = picamera.PiCamera()
+    photoHeight = 540
+    camera.resolution = (16*photoHeight/9, photoHeight)
+    camera.capture('blackRoad.jpg')
+    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
     
     for source_img in os.listdir("test_images/"):
     
         image = mpimg.imread("test_images/"+ source_img)
         processed = process_frame(image)
         mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
+        loop()
     
-         
-loop()
+loop()        
+
 
 
 
