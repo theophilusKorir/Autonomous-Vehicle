@@ -7,87 +7,87 @@ import math
 import os
 import shutil
 import struct
-import smbus
-import picamera
+# import smbus
+# import picamera
 import time
 
-def getFloatData(oldFloats):
-    try:
-        data_received = bus.read_i2c_block_data(address, 1, 8)
-        newFloats = [bytes_2_float(data_received, 0)]
-        newFloats.append(bytes_2_float(data_received, 1))
-    except:
-        print("error reading float data")
-        newFloats = oldFloats;
+# def getFloatData(oldFloats):
+#     try:
+#         data_received = bus.read_i2c_block_data(address, 1, 8)
+#         newFloats = [bytes_2_float(data_received, 0)]
+#         newFloats.append(bytes_2_float(data_received, 1))
+#     except:
+#         print("error reading float data")
+#         newFloats = oldFloats;
 
-    return newFloats
+#     return newFloats
 
-#
-# 2 = command byte to request second data block from Arduino
-# 4 = number of bytes (one 2-byte word + two bytes)
-#
-def getByteData(oldBytes):
-    try:
-        data_received = bus.read_i2c_block_data(address, 2, 4)
-        newBytes = [data_received[0]*255 + data_received[1]]
-        newBytes.append(data_received[2])
-        newBytes.append(data_received[3])
-    except:
-        print("error reading byte data")
-        newBytes = oldBytes;
+# #
+# # 2 = command byte to request second data block from Arduino
+# # 4 = number of bytes (one 2-byte word + two bytes)
+# #
+# def getByteData(oldBytes):
+#     try:
+#         data_received = bus.read_i2c_block_data(address, 2, 4)
+#         newBytes = [data_received[0]*255 + data_received[1]]
+#         newBytes.append(data_received[2])
+#         newBytes.append(data_received[3])
+#     except:
+#         print("error reading byte data")
+#         newBytes = oldBytes;
 
-    return newBytes
+#     return newBytes
 
-#
-# 255 = command byte to initiate writing to Arduino
-# (arbitrary--must be different than read)
-#
-def putByteList(byteList):
-    try:
-        bus.write_i2c_block_data(address, 255, byteList)
-    except:
-        print("error writing commands")
-    return None
+# #
+# # 255 = command byte to initiate writing to Arduino
+# # (arbitrary--must be different than read)
+# #
+# def putByteList(byteList):
+#     try:
+#         bus.write_i2c_block_data(address, 255, byteList)
+#     except:
+#         print("error writing commands")
+#     return None
 
-#
-# crazy conversion of groups of 4 bytes in an array into a float
-# simple code assumes floats are at beginning of the array
-# "index" = float index, starting at 0
-#
-def bytes_2_float(data, index):
-    bytes = data[4*index:(index+1)*4]
-    return struct.unpack('f', "".join(map(chr, bytes)))[0]
+# #
+# # crazy conversion of groups of 4 bytes in an array into a float
+# # simple code assumes floats are at beginning of the array
+# # "index" = float index, starting at 0
+# #
+# def bytes_2_float(data, index):
+#     bytes = data[4*index:(index+1)*4]
+#     return struct.unpack('f', "".join(map(chr, bytes)))[0]
 
-##########
-# main part of script starts here
-##########
+# ##########
+# # main part of script starts here
+# ##########
 
-#
-# smbus implements i2c on the RPi
-#
-bus = smbus.SMBus(1)
+# #
+# # smbus implements i2c on the RPi
+# #
+# bus = smbus.SMBus(1)
 
-#
-# this is the Slave address of the Arduino
-#
-address = 0x04
+# #
+# # this is the Slave address of the Arduino
+# #
+# address = 0x04
 
-#
-# initialize dummy value of output from Pi (bytes only)
-#
-##byteListDummyFromPi = [150, 220]
+# #
+# # initialize dummy value of output from Pi (bytes only)
+# #
+# ##byteListDummyFromPi = [150, 220]
 
-#
-# initialize dummy values of inputs to Pi
-#
-# dummyToPiFloats = [-3.1416, 6.2832]
-# dummyToPiBytes = [2047, 50, 50]
+# #
+# # initialize dummy values of inputs to Pi
+# #
+# # dummyToPiFloats = [-3.1416, 6.2832]
+# # dummyToPiBytes = [2047, 50, 50]
 
-#
-# now loop thru reading from and writing to Arduino
-#
+# #
+# # now loop thru reading from and writing to Arduino
+# #
 
-####IMAGE PROCESSING#######
+# ####IMAGE PROCESSING#######
 
 
 def grayscale(img):
@@ -129,32 +129,17 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
     for line in lines:
         for x1,y1,x2,y2 in line:
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
-             
-            temp = (y1 - y2) / (x1 - x2)
-            ##intercept = y1 - temp * x1
+            gradient = 0
 
+            if((y1 - y2) == 0) :
+                gradient = 0
+                print(x1, y1, x2, y2, gradient) 
 
+            else:
+                gradient = 1
+                print(x1, y1, x2, y2, gradient)
 
-            if temp < 0:
-                gradient = (-1 * temp)
-                print(gradient)
-
-                intercept = (y1 - gradient * x1)
-                x_bottom = (540 - intercept) / gradient;
-                offset = x_bottom - 540;
- 
-                print(offset)
-                beta_angle = 90 - int((math.atan(gradient) * 57.3))
-                count = 10
-                while count > 0:
-                    time.sleep(0.5)
-                    print(offset)
-                    print(beta_angle)
-                    bytelist = [offset, beta_angle]
-                    putByteList(bytelist)
-                    count -= 1
-
-                   ## print(offset)
+                    
 
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
@@ -170,16 +155,22 @@ def process_frame(image):
     gray_image = grayscale(image)
     img_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-    lower_yellow = np.array([10, 100, 100], dtype = "uint8")
-    upper_yellow = np.array([60, 255, 255], dtype="uint8")
+    lower_yellow = np.array([0, 165, 255], dtype = "uint8")
+    upper_yellow = np.array([24, 138, 204], dtype="uint8")
 
     mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
-    mask_white = cv2.inRange(gray_image, 200, 255)
+    mask_white = cv2.inRange(gray_image, 99, 100)
+
+
+
     mask_yw = cv2.bitwise_or(mask_white, mask_yellow)
     mask_yw_image = cv2.bitwise_and(gray_image, mask_yw)
 
     kernel_size = 5
     gauss_gray = gaussian_blur(mask_yw_image,kernel_size)
+
+    cv2.imshow('image', mask_yw_image)
+    cv2.waitKey(0)
 
     #same as quiz values
     low_threshold = 50
@@ -199,11 +190,11 @@ def process_frame(image):
     rho = 2
     theta = np.pi/180
     #threshold is minimum number of intersections in a grid for candidate line to go to output
-    threshold = 20
+    threshold = 120
     min_line_len = 50
     max_line_gap = 200
 
-    line_image = hough_lines(roi_image, rho, theta, threshold, min_line_len, max_line_gap)
+    line_image = hough_lines(canny_edges, rho, theta, threshold, min_line_len, max_line_gap)
     
     return line_image
 
@@ -211,26 +202,20 @@ def process_frame(image):
 
 def loop():
     
-    camera = picamera.PiCamera()
-    photoHeight = 540
-    camera.resolution = (16*photoHeight/9, photoHeight)
-    camera.capture('blackRoad.jpg')
-    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
+    # camera = picamera.PiCamera()
+    # photoHeight = 540
+    # camera.resolution = (16*photoHeight/9, photoHeight)
+    # camera.capture('blackRoad.jpg')
+    # shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
     
     for source_img in os.listdir("test_images/"):
     
         image = mpimg.imread("test_images/"+ source_img)
         processed = process_frame(image)
         mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
-<<<<<<< HEAD
-        loop()
+
     
 loop()        
-
-=======
-      
-loop()
->>>>>>> 7a33ae3d363f0fcc3a7be18f3f8487e977fe61df
 
 
 
