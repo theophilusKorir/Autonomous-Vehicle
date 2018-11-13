@@ -87,15 +87,6 @@ address = 0x04
 # now loop thru reading from and writing to Arduino
 #
 
-
-
-
-
-
-
-
-
-
 ####IMAGE PROCESSING#######
 
 
@@ -165,27 +156,6 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 
                    ## print(offset)
 
-   ## beta_angle = 90 - (math.atan(gradient) * 57.3)
-
-
-
-
-# while True:
-#     time.sleep(0.1)
-#     dummyToPiFloats = getFloatData(dummyToPiFloats)
-#     dummyToPiBytes = getByteData(dummyToPiBytes)
-#     print(dummyToPiFloats, dummyToPiBytes)
-
-##send variable to Pi
-  
-
-            
-
-    
-    
-
-    ## y = mx + b, m = (y1 - y2) / (x1 - x2), b 
-##return 
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
  
@@ -194,16 +164,11 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     draw_lines(line_img, lines)
     return line_img
 
-
-
-
 def process_frame(image):
     global first_frame
 
     gray_image = grayscale(image)
     img_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-    #hsv = [hue, saturation, value]
-    #more accurate range for yellow since it is not strictly black, white, r, g, or b
 
     lower_yellow = np.array([10, 100, 100], dtype = "uint8")
     upper_yellow = np.array([60, 255, 255], dtype="uint8")
@@ -257,10 +222,15 @@ def loop():
         image = mpimg.imread("test_images/"+ source_img)
         processed = process_frame(image)
         mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
+<<<<<<< HEAD
         loop()
     
 loop()        
 
+=======
+      
+loop()
+>>>>>>> 7a33ae3d363f0fcc3a7be18f3f8487e977fe61df
 
 
 
