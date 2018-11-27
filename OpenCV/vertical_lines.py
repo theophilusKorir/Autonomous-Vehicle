@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
@@ -7,8 +6,8 @@ import math
 import os
 import shutil
 import struct
-import smbus
-import picamera
+# import smbus
+# import picamera
 import time
 
 def getFloatData(oldFloats):
@@ -64,13 +63,13 @@ def bytes_2_float(data, index):
 
 #
 # smbus implements i2c on the RPi
-#
-bus = smbus.SMBus(1)
+# #
+# bus = smbus.SMBus(1)
 
-#
-# this is the Slave address of the Arduino
-#
-address = 0x04
+# #
+# # this is the Slave address of the Arduino
+# #
+# address = 0x04
 
 #
 # initialize dummy value of output from Pi (bytes only)
@@ -87,7 +86,7 @@ address = 0x04
 # now loop thru reading from and writing to Arduino
 #
 
-# ####IMAGE PROCESSING#######
+####IMAGE PROCESSING#######
 
 
 def grayscale(img):
@@ -129,17 +128,8 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
     for line in lines:
         for x1,y1,x2,y2 in line:
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
-            gradient = 0
-
-            if((y1 - y2) == 0) :
-                gradient = 0
-                print(x1, y1, x2, y2, gradient) 
-
-            else:
-                gradient = 1
-                print(x1, y1, x2, y2, gradient)
-
-                    
+             
+            print(x1, y1, x2, y2)
 
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
@@ -155,22 +145,16 @@ def process_frame(image):
     gray_image = grayscale(image)
     img_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-    lower_yellow = np.array([0, 165, 255], dtype = "uint8")
-    upper_yellow = np.array([24, 138, 204], dtype="uint8")
+    lower_yellow = np.array([31, 110, 153], dtype = "uint8")
+    upper_yellow = np.array([32, 110, 154], dtype="uint8")
 
     mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
-    mask_white = cv2.inRange(gray_image, 99, 100)
-
-
-
+    mask_white = cv2.inRange(gray_image, 200, 255)
     mask_yw = cv2.bitwise_or(mask_white, mask_yellow)
     mask_yw_image = cv2.bitwise_and(gray_image, mask_yw)
 
     kernel_size = 5
     gauss_gray = gaussian_blur(mask_yw_image,kernel_size)
-
-    cv2.imshow('image', mask_yw_image)
-    cv2.waitKey(0)
 
     #same as quiz values
     low_threshold = 50
@@ -190,7 +174,7 @@ def process_frame(image):
     rho = 2
     theta = np.pi/180
     #threshold is minimum number of intersections in a grid for candidate line to go to output
-    threshold = 120
+    threshold = 140
     min_line_len = 50
     max_line_gap = 200
 
@@ -202,22 +186,16 @@ def process_frame(image):
 
 def loop():
     
-
-    camera = picamera.PiCamera()
-    photoHeight = 540
-    camera.resolution = (16*photoHeight/9, photoHeight)
-    camera.capture('blackRoad.jpg')
-    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
+    # camera = picamera.PiCamera()
+    # photoHeight = 540
+    # camera.resolution = (16*photoHeight/9, photoHeight)
+    # camera.capture('blackRoad.jpg')
+    # shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
     
     for source_img in os.listdir("test_images/"):
     
         image = mpimg.imread("test_images/"+ source_img)
         processed = process_frame(image)
         mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
-
-    
-loop()        
-
-
-
-
+      
+loop()
