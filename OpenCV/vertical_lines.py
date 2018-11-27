@@ -202,12 +202,21 @@ def process_frame(image):
 
 def loop():
     
+<<<<<<< HEAD
     camera = picamera.PiCamera()
     photoHeight = 540
     camera.resolution = (16*photoHeight/9, photoHeight)
     camera.capture('blackRoad.jpg')
     shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
     
+=======
+##    camera = picamera.PiCamera()
+##    photoHeight = 540
+##    camera.resolution = (16*photoHeight/9, photoHeight)
+##    camera.capture('blackRoad.jpg')
+##    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad.jpg")
+##    
+>>>>>>> 985eafb4dc5b88707d02e65669282a7b0bcd5705
     for source_img in os.listdir("test_images/"):
     
         image = mpimg.imread("test_images/"+ source_img)
