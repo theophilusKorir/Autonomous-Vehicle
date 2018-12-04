@@ -21,7 +21,6 @@
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1(LSM9DS1_XGCS, LSM9DS1_MCS);
 Servo steeringServo;
 float pingDistanceCM = 0.0;
-byte motorPWM=0;
 
 //i2c global variables
 byte piCommand;
@@ -29,8 +28,10 @@ byte piData[2];
 byte d;
 byte v_desired;
 int  pwm_v_ratio = 5;
-int x;
-int y;
+byte x;
+byte y;
+int temp_x;
+
 
 void setup() {
     Serial.begin(115200);    
@@ -62,18 +63,17 @@ void setup() {
 
 int receiveDataI2C(int nPoints) {
       piCommand = Wire.read();
-
+      //Serial.println("here");
       // if Pi is sending data, parse it into incoming data array
-      if (piCommand == 255 && piCommand < 256) {
-          int temp_x = Wire.read();
-          if (temp_x != 0) {
-            x = temp_x;
-          }
-          y = Wire.read(); 
-          Serial.println(x);
+      if (piCommand == 255) {
+          x = Wire.read();
+          //y = Wire.read(); 
+          //sSerial.println(x);
           //Serial.println(y);
-          //Serial.println((y *3));         
-      }      
+          //Serial.println((y *3)); 
+                  
+      }   
+      while (Wire.available()) {Wire.read(); }  
 }
 
 void sendDataI2C(float some, float some2) {
@@ -96,7 +96,7 @@ void sendDataI2C(float some, float some2) {
 
 //////////////////////////////////////////////////////////////////
 void loop() {
-
+    static byte motorPWM = 150;
 //  get the ping distance
     getPingDistanceCM();    
     analogWrite(motorPin,motorPWM);
@@ -131,7 +131,6 @@ void loop() {
     float prop_gain_heading = 4;
     heading_desired = (x - 128) / 4 + 90;
 
-    //distance and heading feedback control with complementary filter
     //heading control
     est_imu_heading -= (g.gyro.z * 0.02);
     float servo_angle = heading_desired - prop_gain_heading * est_imu_heading;
@@ -140,18 +139,22 @@ void loop() {
     //velocity feedback
     float gain_d = 2;
 
-    motorPWM = (pingDistanceCM * gain_d) + 150;
-    //Serial.println(x);
-
-
-       
+    
+    int new_value = (pingDistanceCM * gain_d) + 150;
+      //Serial.println(new_value) ; 
+    motorPWM = (0.85 * new_value) + (1.0 - 0.15) * motorPWM;
+    //Serial.println(nominal);
+    //Serial.println(trial + " trial");
+    
+    Serial.println(motorPWM);
+        
 }
 
 ////////////////////////////////////////////////////////////
 // Ping Sensor 
 void getPingDistanceCM()
 {
-  const long timeout_us = 3000;
+  const long timeout_us = 6000;
 
   digitalWrite(pingTrigPin, LOW);
   delayMicroseconds(2);
@@ -165,5 +168,5 @@ void getPingDistanceCM()
     echo_time = timeout_us;
  }
 
-  pingDistanceCM = constrain(0.017*echo_time,5.0,80.0);
+  pingDistanceCM = constrain(0.017*echo_time,5.0,100.0);
 }
