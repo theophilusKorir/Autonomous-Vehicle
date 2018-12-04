@@ -43,8 +43,8 @@ dummyToPiBytes = [2047, 50, 50]
 # define the lower and upper boundaries of the "orange"
 # ball in the HSV coim redalor space, then initialize the
 # list of tracked points
-lower_limit = np.array([0, 50, 50])
-upper_limit = np.array([5, 255, 255])
+lower_limit = np.array([0, 0, 0])
+upper_limit = np.array([211, 211, 211])
 
 #lower_limit = (110, 50, 50)
 #upper_limit = (130, 255, 255)
