@@ -75,7 +75,11 @@ address = 0x04
 #
 # initialize dummy value of output from Pi (bytes only)
 #
-byteListDummyFromPi = [150, 220]
+x = 4.5
+y = 6.5
+x = int(x)
+y = int(y)
+byteListDummyFromPi = [x,y]
 
 #
 # initialize dummy values of inputs to Pi
@@ -90,7 +94,7 @@ while True:
     time.sleep(0.1)
     dummyToPiFloats = getFloatData(dummyToPiFloats)
     dummyToPiBytes = getByteData(dummyToPiBytes)
-    print(dummyToPiFloats, dummyToPiBytes)
+    #print(dummyToPiFloats, dummyToPiBytes)
 #
 #   send variable to Pi
 #

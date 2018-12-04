@@ -6,6 +6,9 @@ import math
 import os
 import shutil
 import struct
+import imutils
+import picamera.array
+import io
 # import smbus
 import picamera
 import time
@@ -152,6 +155,9 @@ def process_frame(image):
     mask_white = cv2.inRange(gray_image, 200, 255)
     mask_yw = cv2.bitwise_or(mask_white, mask_yellow)
     mask_yw_image = cv2.bitwise_and(gray_image, mask_yw)
+    
+    #cv2.imshow("Frame2", mask_yw)
+    
 
     kernel_size = 5
     gauss_gray = gaussian_blur(mask_yw_image,kernel_size)
@@ -179,24 +185,36 @@ def process_frame(image):
     max_line_gap = 200
 
     line_image = hough_lines(canny_edges, rho, theta, threshold, min_line_len, max_line_gap)
+    print(type(line_image))
+    #line_image = imutils.resize(line_image, width=300)
     
     return line_image
 
 
 
 def loop():
-##    
-##    camera = picamera.PiCamera()
-##    photoHeight = 540
-##    camera.resolution = (16*photoHeight/9, photoHeight)
-##    camera.capture('blackRoad.jpg')
-##    shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
-##    image = mpimg.imread('blackRoad.jpg')
-##    processed = process_frame(image)
-    for source_img in os.listdir("test_images/"):
     
-        image = mpimg.imread("test_images/"+ source_img)
-        processed = process_frame(image)
-        mpimg.imsave("processed/annotated_ " +str(time.time())+source_img, processed)
-      
+    # camera = picamera.PiCamera()
+    # photoHeight = 540
+    # camera.resolution = (16*photoHeight/9, photoHeight)
+    # camera.capture('blackRoad.jpg')
+    # shutil.move("/home/pi/Autonomous-Vehicle/OpenCV/blackRoad.jpg", "/home/pi/Autonomous-Vehicle/OpenCV/test_images/blackRoad1.jpg")
+
+    while True:
+        
+        with picamera.PiCamera() as camera:
+            
+            camera.resolution = (640, 480)
+##            camera.start_preview()
+            
+            with picamera.array.PiRGBArray(camera) as stream:
+                camera.capture(stream, format ='bgr')
+                camera.start_preview()
+                time.sleep(2)
+                frame = stream.array
+                #cv2.imread(frame)
+                #cv.imshow(frame)
+                process_frame(frame)
+
 loop()
+
